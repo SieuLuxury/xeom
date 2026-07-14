@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="theme-color" content="#f8f6ff">
+    <title>Hộp thư dịu dàng — Trạm Dịu Dàng</title>
+    <meta name="description" content="Hộp thư lời cảm ơn dành cho tài xế Trạm Dịu Dàng.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:opsz,wght@9..40,400..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="tools.css">
+</head>
+
+<body>
+    <div class="tool-ambient" aria-hidden="true"><i></i><i></i><i></i></div>
+
+    <nav class="tool-nav" aria-label="Điều hướng công cụ">
+        <a class="tool-brand" href="index.html">
+            <span class="tool-brand-mark">🏍️</span>
+            <span class="tool-brand-copy"><strong>trạm dịu dàng</strong><small>driver studio</small></span>
+        </a>
+        <div class="tool-nav-actions">
+            <a class="tool-link-button" href="index.html"><span>xem trang khách</span> ↗</a>
+            <button class="tool-nav-button" id="syncBtn" type="button" aria-label="Đồng bộ hộp thư" title="Đồng bộ" hidden>↻</button>
+            <button class="tool-link-button" id="signOutBtn" type="button" hidden><span>đăng xuất</span> ↘</button>
+            <button class="tool-nav-button" id="toolTheme" type="button" aria-label="Chuyển giao diện tối">☾</button>
+        </div>
+    </nav>
+
+    <main class="tool-shell auth-shell" id="authGate" aria-labelledby="authTitle">
+        <section class="auth-card" aria-labelledby="authTitle">
+            <div class="auth-icon">🪖</div>
+            <span class="tool-kicker">Driver access only</span>
+            <h1 id="authTitle">Mở hộp thư<br>của bạn.</h1>
+            <p id="authCopy">Đăng nhập bằng tài khoản đã được cấp quyền tài xế để xem những lời nhắn riêng tư.</p>
+            <button class="auth-button" id="signInBtn" type="button"><span>đăng nhập với Google</span><span>→</span></button>
+            <small class="auth-footnote">Trạm Dịu Dàng không hiển thị tin nhắn trước khi xác thực.</small>
+        </section>
+    </main>
+
+    <main class="tool-shell" id="driverDashboard" aria-labelledby="driverTitle" hidden>
+        <header class="driver-hero">
+            <div>
+                <span class="tool-kicker">Driver inbox • cập nhật realtime</span>
+                <h1 class="tool-title" id="driverTitle">Hộp thư<br><em>dịu dàng.</em></h1>
+                <p class="tool-lead">Một góc nhỏ để xem những lời tử tế hành khách gửi lại sau mỗi chiếc thẻ được mở.</p>
+            </div>
+            <aside class="security-note" aria-label="Lưu ý bảo mật">
+                <span>🔒</span>
+                <div>
+                    <strong>Trang quản trị đang ở chế độ beta</strong>
+                    <p>Không chia sẻ URL này. Cần bật Firebase Auth và Security Rules trước khi dùng chính thức.</p>
+                </div>
+            </aside>
+        </header>
+
+        <section class="stats-grid" aria-label="Thống kê">
+            <article class="driver-stat">
+                <div class="driver-stat-top"><span>lượt mở thẻ</span><span class="driver-stat-icon">✦</span></div>
+                <strong id="statViews">—</strong>
+            </article>
+            <article class="driver-stat">
+                <div class="driver-stat-top"><span>lời cảm ơn</span><span class="driver-stat-icon">♡</span></div>
+                <strong id="statThanks">—</strong>
+            </article>
+            <article class="driver-stat">
+                <div class="driver-stat-top"><span>nhắn hôm nay</span><span class="driver-stat-icon">☻</span></div>
+                <strong id="statToday">—</strong>
+            </article>
+        </section>
+
+        <section class="inbox-section" aria-labelledby="inboxTitle">
+            <div class="inbox-heading">
+                <div>
+                    <span class="tool-kicker">Từ hành khách</span>
+                    <h2 id="inboxTitle">Lời nhắn gần đây</h2>
+                </div>
+                <div class="realtime-pill"><i></i><span id="connectionText">đang kết nối realtime</span></div>
+            </div>
+
+            <div class="inbox-toolbar">
+                <div class="filter-row" id="filterRow" role="group" aria-label="Lọc theo tâm trạng">
+                    <button class="filter-chip is-active" type="button" data-filter="all" aria-pressed="true">Tất cả</button>
+                    <button class="filter-chip" type="button" data-filter="tired" aria-pressed="false">🥹 Hơi đuối</button>
+                    <button class="filter-chip" type="button" data-filter="okay" aria-pressed="false">😌 Cũng ổn</button>
+                    <button class="filter-chip" type="button" data-filter="happy" aria-pressed="false">😎 Đang vui</button>
+                    <button class="filter-chip" type="button" data-filter="chaos" aria-pressed="false">🤯 Chaos</button>
+                </div>
+                <label class="inbox-search">
+                    <span aria-hidden="true">⌕</span>
+                    <input id="searchInput" type="search" placeholder="Tìm trong lời nhắn..." aria-label="Tìm trong lời nhắn">
+                </label>
+            </div>
+
+            <div class="message-list" id="messageList" aria-live="polite" aria-busy="true">
+                <div class="loading">
+                    <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                    <p class="state-title">Đang mở hộp thư...</p>
+                    <p class="state-copy">Những lời tử tế đang trên đường tới.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="tool-toast" id="toolToast" role="status" aria-live="polite"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script>
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyCOKO3ozY3osEiFHD3Y8E-zbwaewJfk2Vw",
+            authDomain: "loi-nhan.firebaseapp.com",
+            projectId: "loi-nhan",
+            storageBucket: "loi-nhan.firebasestorage.app",
+            messagingSenderId: "171700974856",
+            appId: "1:171700974856:web:7016cf3aca9c8dd71968bd",
+        };
+
+        const MOODS = {
+            happy: { label: "Đang vui", emoji: "😎", color: "#ff68a8" },
+            tired: { label: "Hơi đuối", emoji: "🥹", color: "#7453ff" },
+            okay: { label: "Cũng ổn", emoji: "😌", color: "#49bf91" },
+            chaos: { label: "Hơi chaos", emoji: "🤯", color: "#e79f26" },
+            sad: { label: "Hơi buồn", emoji: "😔", color: "#6fbde2" },
+            worried: { label: "Lo lắng", emoji: "😟", color: "#a17bea" },
+            neutral: { label: "Bình thường", emoji: "🙂", color: "#82908a" },
+            unknown: { label: "Chưa chọn mood", emoji: "✨", color: "#7453ff" },
+        };
+
+        const state = { db: null, auth: null, messages: [], activeFilter: "all", search: "", unsubscribers: [] };
+        const $ = (id) => document.getElementById(id);
+
+        initTheme();
+        bindUI();
+        initInbox();
+
+        function initTheme() {
+            let saved = null;
+            try { saved = JSON.parse(localStorage.getItem("tramdiudang_theme")); } catch (_) { /* use default */ }
+            applyTheme(saved || (new Date().getHours() >= 20 || new Date().getHours() < 6 ? "night" : "day"));
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.dataset.theme = theme;
+            try { localStorage.setItem("tramdiudang_theme", JSON.stringify(theme)); } catch (_) { /* optional */ }
+            $("toolTheme").textContent = theme === "night" ? "☀" : "☾";
+            $("toolTheme").setAttribute("aria-label", theme === "night" ? "Chuyển giao diện sáng" : "Chuyển giao diện tối");
+            document.querySelector('meta[name="theme-color"]').content = theme === "night" ? "#121019" : "#f8f6ff";
+        }
+
+        function bindUI() {
+            $("toolTheme").addEventListener("click", () => applyTheme(document.documentElement.dataset.theme === "night" ? "day" : "night"));
+            $("syncBtn").addEventListener("click", syncNow);
+            $("signInBtn").addEventListener("click", signInDriver);
+            $("signOutBtn").addEventListener("click", signOutDriver);
+            $("filterRow").addEventListener("click", (event) => {
+                const button = event.target.closest("button[data-filter]");
+                if (!button) return;
+                state.activeFilter = button.dataset.filter;
+                $("filterRow").querySelectorAll("button").forEach((item) => {
+                    const selected = item === button;
+                    item.classList.toggle("is-active", selected);
+                    item.setAttribute("aria-pressed", String(selected));
+                });
+                renderMessages();
+            });
+            $("searchInput").addEventListener("input", (event) => {
+                state.search = event.target.value.trim().toLocaleLowerCase("vi");
+                renderMessages();
+            });
+        }
+
+        function initInbox() {
+            try {
+                if (!window.firebase) throw new Error("Firebase SDK chưa tải được");
+                if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+                state.db = firebase.firestore();
+                state.auth = firebase.auth();
+                state.auth.onAuthStateChanged(handleAuthState);
+            } catch (error) {
+                showAuthMessage("Không thể kết nối đăng nhập", error.message, false);
+            }
+        }
+
+        async function handleAuthState(user) {
+            stopSubscriptions();
+            if (!user) {
+                $("authGate").hidden = false;
+                $("driverDashboard").hidden = true;
+                $("signOutBtn").hidden = true;
+                $("syncBtn").hidden = true;
+                showAuthMessage("Mở hộp thư của bạn.", "Đăng nhập bằng tài khoản đã được cấp quyền tài xế để xem những lời nhắn riêng tư.", true);
+                return;
+            }
+            try {
+                const token = await user.getIdTokenResult(true);
+                if (token.claims.driver !== true) {
+                    $("authGate").hidden = false;
+                    $("driverDashboard").hidden = true;
+                    $("signOutBtn").hidden = false;
+                    $("syncBtn").hidden = true;
+                    showAuthMessage("Tài khoản chưa được cấp quyền.", "Custom claim “driver” chưa có trên tài khoản này. Hãy dùng tài khoản tài xế đã được quản trị viên phê duyệt.", false);
+                    return;
+                }
+                $("authGate").hidden = true;
+                $("driverDashboard").hidden = false;
+                $("signOutBtn").hidden = false;
+                $("syncBtn").hidden = false;
+                subscribeStats();
+                subscribeMessages();
+            } catch (error) {
+                showAuthMessage("Chưa xác minh được quyền", error.message || "Vui lòng đăng nhập lại.", false);
+            }
+        }
+
+        async function signInDriver() {
+            if (!state.auth) return showToast("Dịch vụ đăng nhập chưa sẵn sàng");
+            const button = $("signInBtn");
+            button.disabled = true;
+            try {
+                if (state.auth.currentUser) {
+                    await state.auth.signOut();
+                    showToast("Đã đăng xuất — chọn tài khoản khác nhé");
+                    return;
+                }
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: "select_account" });
+                await state.auth.signInWithPopup(provider);
+            } catch (error) {
+                if (error.code !== "auth/popup-closed-by-user") showAuthMessage("Đăng nhập chưa thành công", friendlyAuthError(error), true);
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function signOutDriver() {
+            if (state.auth) await state.auth.signOut();
+            showToast("Đã đăng xuất khỏi hộp thư");
+        }
+
+        function showAuthMessage(title, copy, canSignIn) {
+            $("authTitle").textContent = title;
+            $("authCopy").textContent = copy;
+            $("signInBtn").hidden = !canSignIn && !state.auth?.currentUser;
+            if (state.auth?.currentUser) {
+                $("signInBtn").hidden = false;
+                $("signInBtn").firstElementChild.textContent = "đổi tài khoản Google";
+            } else {
+                $("signInBtn").firstElementChild.textContent = "đăng nhập với Google";
+            }
+        }
+
+        function friendlyAuthError(error) {
+            if (error.code === "auth/operation-not-allowed") return "Google Sign-In chưa được bật trong Firebase Authentication.";
+            if (error.code === "auth/unauthorized-domain") return "Domain này chưa nằm trong danh sách Authorized domains của Firebase.";
+            if (error.code === "auth/network-request-failed") return "Mạng đang chập chờn. Hãy thử lại sau.";
+            return error.message || "Hãy thử lại bằng tài khoản tài xế.";
+        }
+
+        function subscribeStats() {
+            const unsubscribe = state.db.collection("stats").doc("global").onSnapshot((doc) => {
+                const data = doc.exists ? doc.data() : {};
+                $("statViews").textContent = compactNumber(safeNumber(data.totalViews));
+                $("statThanks").textContent = compactNumber(safeNumber(data.totalThanks));
+            }, () => {
+                $("statViews").textContent = "—";
+                $("statThanks").textContent = "—";
+            });
+            state.unsubscribers.push(unsubscribe);
+        }
+
+        function subscribeMessages() {
+            const unsubscribe = state.db.collection("thankyou_messages")
+                .orderBy("createdAt", "desc")
+                .limit(100)
+                .onSnapshot((snapshot) => {
+                    state.messages = snapshot.docs.map((doc) => normalizeMessage(doc.id, doc.data()));
+                    $("messageList").setAttribute("aria-busy", "false");
+                    $("connectionText").textContent = "đã kết nối realtime";
+                    updateTodayCount();
+                    renderMessages();
+                }, (error) => {
+                    $("connectionText").textContent = "mất kết nối";
+                    showError("Chưa mở được hộp thư", error.message || "Kiểm tra kết nối và Firestore Rules.");
+                });
+            state.unsubscribers.push(unsubscribe);
+        }
+
+        function stopSubscriptions() {
+            state.unsubscribers.forEach((unsubscribe) => {
+                try { unsubscribe(); } catch (_) { /* already stopped */ }
+            });
+            state.unsubscribers = [];
+            state.messages = [];
+        }
+
+        function normalizeMessage(id, raw) {
+            const mood = typeof raw.mood === "string" && MOODS[raw.mood] ? raw.mood : "unknown";
+            let createdAt = null;
+            try { createdAt = raw.createdAt && typeof raw.createdAt.toDate === "function" ? raw.createdAt.toDate() : null; } catch (_) { createdAt = null; }
+            return {
+                id,
+                mood,
+                text: typeof raw.text === "string" ? raw.text.slice(0, 200) : "",
+                context: typeof raw.messageShown === "string" ? raw.messageShown.slice(0, 120) : "",
+                createdAt,
+            };
+        }
+
+        function renderMessages() {
+            const list = $("messageList");
+            const filtered = state.messages.filter((message) => {
+                const moodMatches = state.activeFilter === "all" || message.mood === state.activeFilter;
+                const searchMatches = !state.search || message.text.toLocaleLowerCase("vi").includes(state.search) || message.context.toLocaleLowerCase("vi").includes(state.search);
+                return moodMatches && searchMatches;
+            });
+            list.replaceChildren();
+
+            if (!filtered.length) {
+                const empty = document.createElement("div");
+                empty.className = "empty-state";
+                const icon = document.createElement("span");
+                icon.className = "state-icon";
+                icon.textContent = state.messages.length ? "⌕" : "📭";
+                const title = document.createElement("p");
+                title.className = "state-title";
+                title.textContent = state.messages.length ? "Không tìm thấy lời nhắn" : "Hộp thư đang yên tĩnh";
+                const copy = document.createElement("p");
+                copy.className = "state-copy";
+                copy.textContent = state.messages.length ? "Thử một mood hoặc từ khoá khác nhé." : "Lời cảm ơn mới sẽ xuất hiện tự động ở đây.";
+                empty.append(icon, title, copy);
+                list.appendChild(empty);
+                return;
+            }
+
+            filtered.forEach((message, index) => list.appendChild(createMessageCard(message, index)));
+        }
+
+        function createMessageCard(message, index) {
+            const mood = MOODS[message.mood] || MOODS.unknown;
+            const card = document.createElement("article");
+            card.className = "msg-card";
+            card.style.setProperty("--mood-color", mood.color);
+            card.style.animationDelay = `${Math.min(index * 35, 280)}ms`;
+
+            const header = document.createElement("div");
+            header.className = "msg-header";
+            const moodPill = document.createElement("div");
+            moodPill.className = "msg-mood";
+            const emoji = document.createElement("span");
+            emoji.textContent = mood.emoji;
+            const label = document.createElement("span");
+            label.textContent = mood.label;
+            moodPill.append(emoji, label);
+            const time = document.createElement("time");
+            time.className = "msg-time";
+            time.textContent = formatTime(message.createdAt);
+            if (message.createdAt) time.dateTime = message.createdAt.toISOString();
+            header.append(moodPill, time);
+
+            const text = document.createElement("p");
+            text.className = "msg-text";
+            text.textContent = message.text || "Một lời cảm ơn không có nội dung.";
+            card.append(header, text);
+
+            if (message.context) {
+                const context = document.createElement("div");
+                context.className = "msg-context";
+                const strong = document.createElement("strong");
+                strong.textContent = "Lời nhắn hành khách đã mở: ";
+                const value = document.createElement("span");
+                value.textContent = `“${message.context}${message.context.length >= 120 ? "…" : ""}”`;
+                context.append(strong, value);
+                card.appendChild(context);
+            }
+            return card;
+        }
+
+        function showError(titleText, detailText) {
+            const list = $("messageList");
+            list.setAttribute("aria-busy", "false");
+            list.replaceChildren();
+            const box = document.createElement("div");
+            box.className = "error-state";
+            const icon = document.createElement("span");
+            icon.className = "state-icon";
+            icon.textContent = "🛠️";
+            const title = document.createElement("p");
+            title.className = "state-title";
+            title.textContent = titleText;
+            const copy = document.createElement("p");
+            copy.className = "state-copy";
+            copy.textContent = detailText;
+            box.append(icon, title, copy);
+            list.appendChild(box);
+        }
+
+        async function syncNow() {
+            if (!state.db) return showToast("Hộp thư chưa kết nối");
+            $("syncBtn").disabled = true;
+            try {
+                await state.db.collection("thankyou_messages").limit(1).get();
+                showToast("Hộp thư đã được đồng bộ ✦");
+            } catch (_) {
+                showToast("Chưa thể đồng bộ, thử lại sau nhé");
+            } finally {
+                $("syncBtn").disabled = false;
+            }
+        }
+
+        function updateTodayCount() {
+            const today = new Date().toDateString();
+            const count = state.messages.filter((message) => message.createdAt && message.createdAt.toDateString() === today).length;
+            $("statToday").textContent = compactNumber(count);
+        }
+
+        function formatTime(date) {
+            if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "vừa xong";
+            const diff = Math.max(0, Date.now() - date.getTime());
+            const mins = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            if (mins < 1) return "vừa xong";
+            if (mins < 60) return `${mins} phút trước`;
+            if (hours < 24) return `${hours} giờ trước`;
+            if (days < 7) return `${days} ngày trước`;
+            return date.toLocaleDateString("vi-VN");
+        }
+
+        function compactNumber(value) {
+            try { return new Intl.NumberFormat("vi-VN", { notation: "compact", maximumFractionDigits: 1 }).format(value); }
+            catch (_) { return String(value); }
+        }
+
+        function safeNumber(value) {
+            return Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : 0;
+        }
+
+        let toastTimer;
+        function showToast(message) {
+            clearTimeout(toastTimer);
+            $("toolToast").textContent = message;
+            $("toolToast").classList.add("show");
+            toastTimer = setTimeout(() => $("toolToast").classList.remove("show"), 2400);
+        }
+    </script>
+</body>
+
+</html>

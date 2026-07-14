@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f4f0ff">
+    <meta name="color-scheme" content="light dark">
+    <title>Trạm Dịu Dàng — Lời nhắn từ tài xế</title>
+    <meta name="description" content="Cào một chiếc thẻ, nhận một lời nhắn dịu dàng từ tài xế dành riêng cho hôm nay.">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="vi_VN">
+    <meta property="og:title" content="Trạm Dịu Dàng — Chạm nhẹ, nhận một chút dịu dàng">
+    <meta property="og:description" content="Một chiếc thẻ cào nhỏ và lời nhắn tử tế từ tài xế dành riêng cho hôm nay.">
+    <meta property="og:image" content="og.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Trạm Dịu Dàng">
+    <meta name="twitter:description" content="Chạm nhẹ, nhận một chút dịu dàng.">
+    <meta name="twitter:image" content="og.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:opsz,wght@9..40,400..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="ambient" aria-hidden="true">
+        <div class="aurora aurora-one"></div>
+        <div class="aurora aurora-two"></div>
+        <div class="aurora aurora-three"></div>
+        <div class="grain"></div>
+    </div>
+    <div class="floaties" id="particles" aria-hidden="true"></div>
+
+    <header class="topbar">
+        <a class="brand" href="#" id="brandHome" aria-label="Về trang chủ">
+            <span class="brand-mark">🏍️</span>
+            <span class="brand-copy">
+                <strong>trạm dịu dàng</strong>
+                <small>by tài xế của bạn</small>
+            </span>
+        </a>
+
+        <div class="top-actions">
+            <div class="sound-wrap">
+                <button class="icon-button sound-button" id="soundToggle" type="button" aria-label="Bật nhạc nhẹ" aria-pressed="false" aria-expanded="false" aria-controls="soundPanel">
+                    <span class="sound-icon">♫</span>
+                    <span class="sound-label">chill</span>
+                    <span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+                </button>
+                <div class="sound-panel" id="soundPanel" hidden>
+                    <div>
+                        <strong>soft ride radio</strong>
+                        <span>ambient tự tạo • không quảng cáo</span>
+                    </div>
+                    <label class="volume-control">
+                        <span>âm lượng</span>
+                        <input id="volumeSlider" type="range" min="0" max="100" value="28" aria-label="Âm lượng nhạc">
+                    </label>
+                </div>
+            </div>
+            <button class="icon-button compact" id="themeToggle" type="button" aria-label="Đổi màu giao diện" title="Đổi mood màu">☾</button>
+            <button class="icon-button compact saved-button" id="savedToggle" type="button" aria-label="Mở lời nhắn đã lưu" aria-expanded="false" aria-controls="savedDrawer">
+                ♡<span class="saved-count" id="savedCount">0</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="app" id="app">
+        <section class="screen home-screen is-active" id="screenHome" aria-labelledby="homeTitle">
+            <div class="hero-layout">
+                <div class="hero-copy reveal-in">
+                    <div class="eyebrow"><span class="live-dot"></span> một chuyến đi • một chút tử tế</div>
+                    <h1 id="homeTitle">Chạm nhẹ,<br>nhận một chút <em>dịu dàng.</em></h1>
+                    <p class="hero-description">Không cần một ngày hoàn hảo. Chỉ cần một lời nhắn đúng lúc — được tài xế của bạn gói vào chiếc thẻ nhỏ này.</p>
+
+                    <div class="mood-checkin">
+                        <div class="mood-heading">
+                            <span id="moodLabel">Hôm nay bạn thấy sao?</span>
+                            <small id="moodResponse">chọn thật lòng nhé</small>
+                        </div>
+                        <div class="mood-list" id="moodList" role="group" aria-label="Chọn tâm trạng hôm nay">
+                            <button type="button" data-mood="tired" data-emoji="🥹" aria-label="Hơi đuối" aria-pressed="false">🥹 <span>hơi đuối</span></button>
+                            <button type="button" data-mood="okay" data-emoji="😌" aria-label="Cũng ổn" aria-pressed="false">😌 <span>cũng ổn</span></button>
+                            <button type="button" data-mood="happy" data-emoji="😎" aria-label="Đang vui" aria-pressed="false">😎 <span>đang vui</span></button>
+                            <button type="button" data-mood="chaos" data-emoji="🤯" aria-label="Hơi hỗn loạn" aria-pressed="false">🤯 <span>hơi chaos</span></button>
+                        </div>
+                    </div>
+
+                    <button class="surprise-button magnetic" id="surpriseBtn" type="button">
+                        <span>✨</span>
+                        <span><strong>Chọn giúp mình</strong><small>để vũ trụ gửi một lời nhắn</small></span>
+                        <i>↗</i>
+                    </button>
+                </div>
+
+                <div class="hero-visual reveal-in" aria-hidden="true">
+                    <div class="sticker sticker-slow">slow<br>down!</div>
+                    <div class="sticker sticker-safe">ride safe ✦</div>
+                    <div class="sticker sticker-smile">☺</div>
+                    <div class="postcard">
+                        <div class="postcard-top">
+                            <span>GOOD VIBES DELIVERY</span>
+                            <span>07:24 PM</span>
+                        </div>
+                        <div class="postcard-route">
+                            <span class="route-point start">A</span>
+                            <div class="route-line"><i></i><i></i><i></i></div>
+                            <span class="route-bike">🏍️</span>
+                            <span class="route-point end">♥</span>
+                        </div>
+                        <p>“Mong nơi bạn đến có người chờ bằng một nụ cười.”</p>
+                        <div class="postcard-bottom">
+                            <span>#motchutdudang</span>
+                            <strong>LUCKY<br>TICKET</strong>
+                        </div>
+                    </div>
+                    <div class="tape tape-one"></div>
+                    <div class="tape tape-two"></div>
+                </div>
+            </div>
+
+            <section class="message-picker" aria-labelledby="pickerTitle">
+                <div class="section-heading reveal-in">
+                    <div>
+                        <span class="section-kicker">01 — PICK YOUR VIBE</span>
+                        <h2 id="pickerTitle">Bạn cần nghe điều gì?</h2>
+                    </div>
+                    <p>Chọn một chiếc thẻ và cào để mở. Mỗi vibe chỉ mở một lần để lời nhắn luôn có chút đặc biệt.</p>
+                </div>
+                <div class="cat-grid" id="catGrid"></div>
+            </section>
+
+            <section class="progress-card reveal-in" aria-labelledby="progressTitle">
+                <div class="progress-orbit" id="progressOrbit">
+                    <span id="progressNumber">0/4</span>
+                </div>
+                <div class="progress-copy">
+                    <span class="section-kicker">YOUR TINY JOURNEY</span>
+                    <h2 id="progressTitle">Bộ sưu tập dịu dàng</h2>
+                    <p id="progressMessage">Mỗi lời nhắn là một trạm nhỏ. Mở đủ 4 vibe để hoàn thành hành trình hôm nay.</p>
+                </div>
+                <div class="stat-pills">
+                    <div><strong id="homeTotal">60</strong><span>lời nhắn</span></div>
+                    <div><strong id="homeViews">0</strong><span>lượt mở</span></div>
+                </div>
+            </section>
+
+            <section class="driver-note reveal-in">
+                <div class="driver-avatar">🪖<span></span></div>
+                <div>
+                    <span class="section-kicker">A NOTE FROM YOUR DRIVER</span>
+                    <blockquote>“Mình hơi hướng nội, nên không giỏi bắt chuyện. Thay vì lời nói, mình để vài dòng ở đây — mong chuyến đi của bạn nhẹ hơn một chút.”</blockquote>
+                </div>
+                <div class="signature">tài xế<br>của bạn ♡</div>
+            </section>
+        </section>
+
+        <section class="screen scratch-screen" id="screenScratch" aria-labelledby="scratchName" hidden>
+            <div class="scratch-topline">
+                <button class="back-button" id="backBtn" type="button"><span>←</span> quay lại</button>
+                <div class="mini-progress"><i id="miniProgressFill"></i></div>
+                <span id="miniProgressText">vibe 01 / 04</span>
+            </div>
+
+            <div class="scratch-layout">
+                <div class="scratch-intro">
+                    <span class="section-kicker">YOUR MESSAGE IS WAITING</span>
+                    <div class="scratch-title-row">
+                        <span class="scratch-cat-icon" id="scratchIcon">💪</span>
+                        <h1 class="scratch-cat-name" id="scratchName">Động viên</h1>
+                    </div>
+                    <p id="scratchLead">Dùng ngón tay cào lớp màu để mở lời nhắn. Cứ từ từ thôi, điều tử tế không cần vội.</p>
+                    <div class="scratch-sticker" id="scratchSticker">good things<br>take time ✦</div>
+                </div>
+
+                <div class="scratch-zone">
+                    <div class="scratch-card-wrap">
+                        <div class="scratch-card" id="scratchCard">
+                            <article class="scratch-message" id="scratchMessage" tabindex="-1">
+                                <span class="message-quote">“</span>
+                                <p class="scratch-text" id="scratchText">Lời nhắn sẽ hiện ở đây...</p>
+                                <div class="scratch-author"><span></span><em>tài xế của bạn</em></div>
+                                <button class="heart-message" id="heartMessage" type="button" aria-label="Lưu lời nhắn" aria-pressed="false">♡</button>
+                            </article>
+                            <canvas class="scratch-canvas" id="scratchCanvas" tabindex="0" role="img" aria-label="Thẻ cào. Dùng ngón tay hoặc chuột cào bề mặt để mở lời nhắn."></canvas>
+                        </div>
+                        <div class="scratch-guide" id="scratchHint">
+                            <span class="gesture">☝️</span>
+                            <span><strong>Cào để mở</strong><small id="scratchPercentText">đã mở 0%</small></span>
+                            <button id="revealAccessible" type="button">hoặc chạm để mở</button>
+                        </div>
+                    </div>
+
+                    <div class="reveal-panel" id="revealPanel" hidden>
+                        <div class="reveal-actions">
+                            <button class="primary-button" id="anotherBtn" type="button"><span>↻</span> vibe khác</button>
+                            <button class="secondary-button" id="shareBtn" type="button"><span>↗</span> chia sẻ</button>
+                            <button class="secondary-button" id="saveBtn" type="button"><span>♡</span> lưu lại</button>
+                        </div>
+
+                        <div class="aftercare-grid">
+                            <div class="thankyou-box" id="thankyouBox">
+                                <div class="box-heading">
+                                    <span class="box-icon">💌</span>
+                                    <div><strong>Gửi một lời lại cho tài xế</strong><small>ẩn danh • đừng ghi thông tin cá nhân</small></div>
+                                </div>
+                                <div class="quick-replies" id="quickReplies">
+                                    <button type="button">Cảm ơn anh nhé 💛</button>
+                                    <button type="button">Chúc anh lái xe an toàn!</button>
+                                    <button type="button">Lời nhắn rất đúng lúc 🥹</button>
+                                </div>
+                                <div class="ty-input-wrap">
+                                    <textarea id="tyInput" placeholder="Viết điều bạn muốn nhắn, không ghi SĐT/email..." maxlength="200" rows="3"></textarea>
+                                    <span class="ty-count" id="tyCount">0/200</span>
+                                </div>
+                                <button class="send-button" id="btnSend" type="button"><span>gửi lời nhắn</span><i>→</i></button>
+                                <div class="ty-success" id="tySuccess" role="status" hidden>Đã gửi tới tài xế rồi. Cảm ơn bạn đã tử tế! 💛</div>
+                            </div>
+
+                            <div class="breathing-box">
+                                <div class="box-heading">
+                                    <span class="box-icon">🫧</span>
+                                    <div><strong>30 giây thở chậm</strong><small>một khoảng nghỉ bé xíu</small></div>
+                                </div>
+                                <button class="breathing-orb" id="breathingOrb" type="button" aria-label="Bắt đầu bài tập thở 30 giây">
+                                    <span id="breathingText">bắt đầu</span>
+                                    <small id="breathingTime">00:30</small>
+                                </button>
+                                <p id="breathingHint">Chạm vào vòng tròn và thở theo nhịp.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="marquee" aria-hidden="true">
+        <div>RIDE SAFE ✦ TAKE IT EASY ✦ YOU'RE DOING GREAT ✦ THỞ MỘT NHỊP ✦ RIDE SAFE ✦ TAKE IT EASY ✦ YOU'RE DOING GREAT ✦ THỞ MỘT NHỊP ✦</div>
+    </div>
+
+    <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+    <aside class="saved-drawer" id="savedDrawer" role="dialog" aria-modal="true" aria-labelledby="savedTitle" inert>
+        <div class="drawer-head">
+            <div><span class="section-kicker">POCKET OF KINDNESS</span><h2 id="savedTitle">Lời nhắn đã lưu</h2></div>
+            <button id="savedClose" type="button" aria-label="Đóng">×</button>
+        </div>
+        <div class="saved-list" id="savedList"></div>
+        <button class="clear-saved" id="clearSaved" type="button">xoá tất cả lời đã lưu</button>
+    </aside>
+
+    <div class="confetti-container" id="confetti" aria-hidden="true"></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastText"></span></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="messages.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

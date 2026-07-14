@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f8f6ff">
+    <title>QR Studio — Trạm Dịu Dàng</title>
+    <meta name="description" content="Tạo mã QR đẹp để hành khách mở Trạm Dịu Dàng chỉ bằng một lần quét.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:opsz,wght@9..40,400..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="tools.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+
+<body>
+    <div class="tool-ambient" aria-hidden="true"><i></i><i></i><i></i></div>
+
+    <nav class="tool-nav" aria-label="Điều hướng công cụ">
+        <a class="tool-brand" href="index.html">
+            <span class="tool-brand-mark">🏍️</span>
+            <span class="tool-brand-copy"><strong>trạm dịu dàng</strong><small>QR studio</small></span>
+        </a>
+        <div class="tool-nav-actions">
+            <a class="tool-link-button" href="index.html"><span>về trang chính</span> ↗</a>
+            <button class="tool-nav-button" id="toolTheme" type="button" aria-label="Chuyển giao diện tối">☾</button>
+        </div>
+    </nav>
+
+    <main class="tool-shell qr-layout">
+        <section class="qr-copy" aria-labelledby="qrTitle">
+            <span class="tool-kicker">Scan • smile • ride</span>
+            <h1 class="tool-title" id="qrTitle">Tạo QR<br><em>có gu.</em></h1>
+            <p class="tool-lead">Biến link Trạm Dịu Dàng thành một chiếc QR gọn đẹp để dán lên xe, mũ bảo hiểm hoặc thẻ nhỏ sau ghế.</p>
+
+            <form class="qr-form" id="qrForm" novalidate>
+                <label class="input-label" for="urlInput">Link trang hành khách <span>chỉ nhận http / https</span></label>
+                <div class="url-field">
+                    <input class="url-input" id="urlInput" type="url" inputmode="url" autocomplete="url" placeholder="https://tram-diu-dang.example" required>
+                    <button class="paste-button" id="pasteBtn" type="button" aria-label="Dán link từ bộ nhớ tạm" title="Dán link">⎘</button>
+                </div>
+                <p class="form-helper" id="formHelper">Nhập đường dẫn công khai mà hành khách có thể mở trên điện thoại.</p>
+                <div class="form-actions">
+                    <button class="generate-button" type="submit"><span>tạo mã QR</span><span>→</span></button>
+                    <button class="ghost-button" id="useCurrentBtn" type="button">dùng link trang chính</button>
+                </div>
+                <ul class="qr-notes">
+                    <li>✦ độ sửa lỗi cao</li>
+                    <li>✦ tải PNG</li>
+                    <li>✦ sẵn sàng để in</li>
+                </ul>
+            </form>
+        </section>
+
+        <section class="qr-stage" aria-label="Xem trước mã QR">
+            <div class="qr-sticker one" aria-hidden="true">scan me<br>maybe? ☻</div>
+            <div class="qr-sticker two" aria-hidden="true">good vibes<br>inside ✦</div>
+
+            <article class="qr-ticket">
+                <div class="ticket-head"><span>TRẠM DỊU DÀNG</span><span>RIDE • 2026</span></div>
+                <h2 class="ticket-title">Quét để nhận<br>một lời nhắn ♡</h2>
+                <div class="qr-code-shell">
+                    <div class="qr-placeholder" id="qrPlaceholder">
+                        <span>⌗</span>
+                        <strong>QR sẽ xuất hiện ở đây</strong>
+                        <small>Dán link rồi chạm “tạo mã QR”.</small>
+                    </div>
+                    <div id="qrcode" role="img" aria-label="Mã QR đã tạo" hidden></div>
+                </div>
+                <p class="ticket-url" id="qrUrl">READY WHEN YOU ARE ✦</p>
+                <div class="ticket-foot"><span>#motchutdudang</span><strong>LUCKY<br>TICKET</strong></div>
+            </article>
+
+            <div class="qr-actions" id="qrActions" hidden>
+                <button class="qr-action" id="downloadBtn" type="button">↓ tải ảnh PNG</button>
+                <button class="qr-action" id="copyBtn" type="button">⎘ sao chép link</button>
+                <button class="qr-action" id="printBtn" type="button">⌁ in thẻ QR</button>
+            </div>
+        </section>
+    </main>
+
+    <div class="tool-toast" id="toolToast" role="status" aria-live="polite"></div>
+
+    <script>
+        const $ = (id) => document.getElementById(id);
+        let currentUrl = "";
+        let toastTimer;
+
+        initTheme();
+        bindUI();
+        prefillHostedUrl();
+
+        function bindUI() {
+            $("toolTheme").addEventListener("click", () => applyTheme(document.documentElement.dataset.theme === "night" ? "day" : "night"));
+            $("qrForm").addEventListener("submit", (event) => { event.preventDefault(); generateQR(); });
+            $("pasteBtn").addEventListener("click", pasteUrl);
+            $("useCurrentBtn").addEventListener("click", useCurrentHost);
+            $("downloadBtn").addEventListener("click", downloadQR);
+            $("copyBtn").addEventListener("click", copyCurrentUrl);
+            $("printBtn").addEventListener("click", () => window.print());
+            $("urlInput").addEventListener("input", () => setHelper("Nhập đường dẫn công khai mà hành khách có thể mở trên điện thoại."));
+        }
+
+        function initTheme() {
+            let saved = null;
+            try { saved = JSON.parse(localStorage.getItem("tramdiudang_theme")); } catch (_) { /* use default */ }
+            applyTheme(saved || (new Date().getHours() >= 20 || new Date().getHours() < 6 ? "night" : "day"));
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.dataset.theme = theme;
+            try { localStorage.setItem("tramdiudang_theme", JSON.stringify(theme)); } catch (_) { /* optional */ }
+            $("toolTheme").textContent = theme === "night" ? "☀" : "☾";
+            $("toolTheme").setAttribute("aria-label", theme === "night" ? "Chuyển giao diện sáng" : "Chuyển giao diện tối");
+            document.querySelector('meta[name="theme-color"]').content = theme === "night" ? "#121019" : "#f8f6ff";
+        }
+
+        function prefillHostedUrl() {
+            if (location.protocol === "http:" || location.protocol === "https:") {
+                $("urlInput").value = getMainPageUrl();
+            }
+        }
+
+        function useCurrentHost() {
+            if (location.protocol !== "http:" && location.protocol !== "https:") {
+                setHelper("Trang đang mở từ máy local nên chưa có link công khai để dùng.", true);
+                return;
+            }
+            $("urlInput").value = getMainPageUrl();
+            setHelper("Đã lấy link trang chính trên cùng host.");
+            generateQR();
+        }
+
+        function getMainPageUrl() {
+            return new URL("index.html", location.href).href;
+        }
+
+        async function pasteUrl() {
+            if (!navigator.clipboard?.readText) {
+                showToast("Trình duyệt chưa cho phép đọc clipboard");
+                $("urlInput").focus();
+                return;
+            }
+            try {
+                $("urlInput").value = (await navigator.clipboard.readText()).trim();
+                setHelper("Đã dán link từ clipboard.");
+            } catch (_) {
+                showToast("Không đọc được clipboard — bạn dán thủ công nhé");
+            }
+        }
+
+        function generateQR() {
+            const raw = $("urlInput").value.trim();
+            let parsed;
+            if (!raw) {
+                setHelper("Bạn chưa nhập link để tạo QR.", true);
+                $("urlInput").focus();
+                return;
+            }
+            try { parsed = new URL(raw); }
+            catch (_) {
+                setHelper("Link chưa đúng định dạng. Ví dụ: https://example.com", true);
+                $("urlInput").focus();
+                return;
+            }
+            if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+                setHelper("Vì an toàn, QR chỉ chấp nhận link bắt đầu bằng http:// hoặc https://", true);
+                $("urlInput").focus();
+                return;
+            }
+            if (typeof window.QRCode !== "function") {
+                setHelper("Thư viện tạo QR chưa tải được. Kiểm tra mạng rồi thử lại.", true);
+                return;
+            }
+
+            currentUrl = parsed.href;
+            const qrElement = $("qrcode");
+            qrElement.replaceChildren();
+            qrElement.hidden = false;
+            $("qrPlaceholder").hidden = true;
+
+            new QRCode(qrElement, {
+                text: currentUrl,
+                width: 250,
+                height: 250,
+                colorDark: "#211b2b",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H,
+            });
+
+            $("qrUrl").textContent = currentUrl;
+            $("qrActions").hidden = false;
+            setHelper("QR đã sẵn sàng — thử quét một lần trước khi in.");
+            showToast("QR có gu đã sẵn sàng ✦");
+            if (window.matchMedia("(max-width: 820px)").matches) {
+                setTimeout(() => $("qrcode").scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "center" }), 100);
+            }
+        }
+
+        function downloadQR() {
+            const canvas = $("qrcode").querySelector("canvas");
+            const image = $("qrcode").querySelector("img");
+            const href = canvas?.toDataURL("image/png") || image?.src;
+            if (!href) return showToast("Hãy tạo QR trước khi tải");
+            const link = document.createElement("a");
+            link.download = "tram-diu-dang-qr.png";
+            link.href = href;
+            link.click();
+        }
+
+        async function copyCurrentUrl() {
+            if (!currentUrl) return showToast("Hãy tạo QR trước nhé");
+            try {
+                await navigator.clipboard.writeText(currentUrl);
+                showToast("Đã sao chép link ✦");
+            } catch (_) {
+                $("urlInput").select();
+                document.execCommand("copy");
+                showToast("Đã sao chép link ✦");
+            }
+        }
+
+        function setHelper(message, isError = false) {
+            $("formHelper").textContent = message;
+            $("formHelper").classList.toggle("is-error", isError);
+        }
+
+        function showToast(message) {
+            clearTimeout(toastTimer);
+            $("toolToast").textContent = message;
+            $("toolToast").classList.add("show");
+            toastTimer = setTimeout(() => $("toolToast").classList.remove("show"), 2400);
+        }
+
+        function prefersReducedMotion() {
+            return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        }
+    </script>
+</body>
+
+</html>

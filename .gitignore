@@ -1,0 +1,21 @@
+# Local tooling and emulator output
+.firebase/
+.firebaserc
+firestore-debug.log
+ui-debug.log
+firebase.zip
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Runtime dependencies and build output
+node_modules/
+dist/
+.wrangler/
+
+# Local secrets
+.env
+.env.*
+!.env.example
