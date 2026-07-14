@@ -77,6 +77,19 @@
                 <button class="qr-action" id="copyBtn" type="button">⎘ sao chép link</button>
                 <button class="qr-action" id="printBtn" type="button">⌁ in thẻ QR</button>
             </div>
+
+            <aside class="nfc-panel" id="nfcPanel" aria-labelledby="nfcTitle" hidden>
+                <div class="nfc-icon" aria-hidden="true">)))</div>
+                <div class="nfc-copy">
+                    <span>NFC • chạm nhẹ</span>
+                    <strong id="nfcTitle">“Chạm điện thoại vào đây, có một lời nhắn dành cho bạn.”</strong>
+                    <small id="nfcHelper">Ghi cùng URL của QR lên NFC tag; QR được giữ làm phương án dự phòng.</small>
+                </div>
+                <div class="nfc-actions">
+                    <button id="nfcWriteBtn" type="button">ghi trực tiếp lên tag</button>
+                    <button id="nfcCopyBtn" type="button">sao chép URL để ghi bằng app NFC</button>
+                </div>
+            </aside>
         </section>
     </main>
 
@@ -90,6 +103,7 @@
         initTheme();
         bindUI();
         prefillHostedUrl();
+        configureNfcSupport();
 
         function bindUI() {
             $("toolTheme").addEventListener("click", () => applyTheme(document.documentElement.dataset.theme === "night" ? "day" : "night"));
@@ -99,6 +113,8 @@
             $("downloadBtn").addEventListener("click", downloadQR);
             $("copyBtn").addEventListener("click", copyCurrentUrl);
             $("printBtn").addEventListener("click", () => window.print());
+            $("nfcWriteBtn").addEventListener("click", writeNfcTag);
+            $("nfcCopyBtn").addEventListener("click", copyCurrentUrl);
             $("urlInput").addEventListener("input", () => setHelper("Nhập đường dẫn công khai mà hành khách có thể mở trên điện thoại."));
         }
 
@@ -191,6 +207,7 @@
 
             $("qrUrl").textContent = currentUrl;
             $("qrActions").hidden = false;
+            $("nfcPanel").hidden = false;
             setHelper("QR đã sẵn sàng — thử quét một lần trước khi in.");
             showToast("QR có gu đã sẵn sàng ✦");
             if (window.matchMedia("(max-width: 820px)").matches) {
@@ -218,6 +235,32 @@
                 $("urlInput").select();
                 document.execCommand("copy");
                 showToast("Đã sao chép link ✦");
+            }
+        }
+
+        function configureNfcSupport() {
+            const supported = "NDEFReader" in window;
+            $("nfcWriteBtn").hidden = !supported;
+            if (!supported) {
+                $("nfcHelper").textContent = "Trình duyệt này chưa hỗ trợ ghi NFC trực tiếp. Hãy sao chép URL và dùng ứng dụng ghi NFC trên điện thoại.";
+            }
+        }
+
+        async function writeNfcTag() {
+            if (!currentUrl) return showToast("Hãy tạo QR/link trước khi ghi NFC");
+            const button = $("nfcWriteBtn");
+            button.disabled = true;
+            button.textContent = "đưa NFC tag lại gần điện thoại...";
+            try {
+                const ndef = new NDEFReader();
+                await ndef.write({ records: [{ recordType: "url", data: currentUrl }] });
+                showToast("Đã ghi URL lên NFC tag ✦");
+                $("nfcHelper").textContent = "Đã ghi xong. Hãy khóa màn hình rồi chạm thử tag trước khi dán lên xe.";
+            } catch (error) {
+                if (error.name !== "AbortError") showToast("Chưa ghi được tag — kiểm tra quyền NFC rồi thử lại");
+            } finally {
+                button.disabled = false;
+                button.textContent = "ghi trực tiếp lên tag";
             }
         }
 

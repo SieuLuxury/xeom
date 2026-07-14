@@ -101,7 +101,7 @@
                     <div class="postcard">
                         <div class="postcard-top">
                             <span>GOOD VIBES DELIVERY</span>
-                            <span>07:24 PM</span>
+                            <span id="heroTime">CHUYẾN HÔM NAY</span>
                         </div>
                         <div class="postcard-route">
                             <span class="route-point start">A</span>
@@ -142,7 +142,7 @@
                 </div>
                 <div class="stat-pills">
                     <div><strong id="homeTotal">60</strong><span>lời nhắn</span></div>
-                    <div><strong id="homeViews">0</strong><span>lượt mở</span></div>
+                    <div title="Mỗi lần một thẻ mới được chọn sẽ tính là một lượt"><strong id="homeViews">0</strong><span>lượt mở thẻ</span></div>
                 </div>
             </section>
 
@@ -195,11 +195,28 @@
                     <div class="reveal-panel" id="revealPanel" hidden>
                         <div class="reveal-actions">
                             <button class="primary-button" id="anotherBtn" type="button"><span>↻</span> vibe khác</button>
-                            <button class="secondary-button" id="shareBtn" type="button"><span>↗</span> chia sẻ</button>
+                            <button class="secondary-button" id="shareBtn" type="button" title="Tạo ảnh dọc 9:16 để mang theo hoặc đăng story"><span>▣</span> mang theo</button>
                             <button class="secondary-button" id="saveBtn" type="button"><span>♡</span> lưu lại</button>
                         </div>
 
                         <div class="aftercare-grid">
+                            <div class="relay-box">
+                                <div class="box-heading">
+                                    <span class="box-icon">🛵</span>
+                                    <div><strong>Lời nhắn nối chuyến</strong><small>từ một hành khách đi trước • chỉ hiện sau khi tài xế duyệt</small></div>
+                                </div>
+                                <blockquote class="relay-received" id="relayReceived" hidden>
+                                    <span>“</span><p id="relayReceivedText"></p><footer>— một người đi trước</footer>
+                                </blockquote>
+                                <p class="relay-empty" id="relayEmpty">Chưa có lời nối chuyến đã duyệt. Bạn có thể để lại câu đầu tiên.</p>
+                                <div class="ty-input-wrap">
+                                    <textarea id="relayInput" placeholder="Ví dụ: Mong người ngồi ở đây sau mình tối nay ngủ thật ngon..." maxlength="140" rows="3"></textarea>
+                                    <span class="ty-count" id="relayCount">0/140</span>
+                                </div>
+                                <button class="send-button relay-send" id="relaySend" type="button"><span>để lại cho người tiếp theo</span><i>→</i></button>
+                                <div class="ty-success" id="relaySuccess" role="status" hidden>Lời nhắn đang chờ tài xế duyệt trước khi nối sang chuyến sau. Cảm ơn bạn! ♡</div>
+                            </div>
+
                             <div class="thankyou-box" id="thankyouBox">
                                 <div class="box-heading">
                                     <span class="box-icon">💌</span>
@@ -237,7 +254,7 @@
     </main>
 
     <div class="marquee" aria-hidden="true">
-        <div>RIDE SAFE ✦ TAKE IT EASY ✦ YOU'RE DOING GREAT ✦ THỞ MỘT NHỊP ✦ RIDE SAFE ✦ TAKE IT EASY ✦ YOU'RE DOING GREAT ✦ THỞ MỘT NHỊP ✦</div>
+        <div>VỀ ĐẾN NƠI AN TOÀN TRƯỚC ĐÃ ✦ ĐƯỜNG ĐÔNG, LÒNG ĐỪNG VỘI ✦ MANG MỘT CHÚT DỊU DÀNG THEO ✦ VỀ ĐẾN NƠI AN TOÀN TRƯỚC ĐÃ ✦ ĐƯỜNG ĐÔNG, LÒNG ĐỪNG VỘI ✦</div>
     </div>
 
     <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>

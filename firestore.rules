@@ -42,9 +42,53 @@ service cloud.firestore {
         && request.resource.data.get('totalThanks', 0) >= 0;
     }
 
+    function validRelayCreate() {
+      return request.resource.data.keys().hasOnly([
+          'text',
+          'category',
+          'moment',
+          'status',
+          'createdAt'
+        ])
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 140
+        && request.resource.data.category in [
+          'encouragement', 'reminders', 'wishes', 'philosophy', 'unknown'
+        ]
+        && request.resource.data.moment in [
+          'early', 'daytime', 'commute', 'late'
+        ]
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt == request.time;
+    }
+
+    function validRelayReview() {
+      return resource.data.status == 'pending'
+        && request.resource.data.keys().hasOnly([
+          'text',
+          'category',
+          'moment',
+          'status',
+          'createdAt',
+          'reviewedAt'
+        ])
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'reviewedAt'])
+        && request.resource.data.status in ['approved', 'rejected']
+        && request.resource.data.reviewedAt == request.time;
+    }
+
     match /thankyou_messages/{messageId} {
       allow create: if validThankYou();
       allow read, update, delete: if isDriver();
+    }
+
+    match /relay_messages/{messageId} {
+      allow create: if validRelayCreate();
+      allow read: if isDriver() || resource.data.status == 'approved';
+      allow update: if isDriver() && validRelayReview();
+      allow delete: if isDriver();
     }
 
     match /stats/global {

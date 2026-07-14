@@ -70,6 +70,10 @@
                 <div class="driver-stat-top"><span>nhắn hôm nay</span><span class="driver-stat-icon">☻</span></div>
                 <strong id="statToday">—</strong>
             </article>
+            <article class="driver-stat">
+                <div class="driver-stat-top"><span>chờ duyệt nối chuyến</span><span class="driver-stat-icon">🛵</span></div>
+                <strong id="statRelayPending">—</strong>
+            </article>
         </section>
 
         <section class="inbox-section" aria-labelledby="inboxTitle">
@@ -103,6 +107,22 @@
                 </div>
             </div>
         </section>
+
+        <section class="inbox-section relay-review-section" aria-labelledby="relayReviewTitle">
+            <div class="inbox-heading">
+                <div>
+                    <span class="tool-kicker">Nối chuyến • cần kiểm duyệt</span>
+                    <h2 id="relayReviewTitle">Lời cho người tiếp theo</h2>
+                </div>
+                <p class="review-note">Chỉ lời đã duyệt mới xuất hiện ở trang hành khách.</p>
+            </div>
+            <div class="message-list" id="relayReviewList" aria-live="polite" aria-busy="true">
+                <div class="loading">
+                    <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                    <p class="state-title">Đang tải hàng chờ...</p>
+                </div>
+            </div>
+        </section>
     </main>
 
     <div class="tool-toast" id="toolToast" role="status" aria-live="polite"></div>
@@ -131,7 +151,7 @@
             unknown: { label: "Chưa chọn mood", emoji: "✨", color: "#7453ff" },
         };
 
-        const state = { db: null, auth: null, messages: [], activeFilter: "all", search: "", unsubscribers: [] };
+        const state = { db: null, auth: null, messages: [], relayMessages: [], activeFilter: "all", search: "", unsubscribers: [] };
         const $ = (id) => document.getElementById(id);
 
         initTheme();
@@ -212,6 +232,7 @@
                 $("syncBtn").hidden = false;
                 subscribeStats();
                 subscribeMessages();
+                subscribeRelayMessages();
             } catch (error) {
                 showAuthMessage("Chưa xác minh được quyền", error.message || "Vui lòng đăng nhập lại.", false);
             }
@@ -290,12 +311,31 @@
             state.unsubscribers.push(unsubscribe);
         }
 
+        function subscribeRelayMessages() {
+            const unsubscribe = state.db.collection("relay_messages")
+                .where("status", "==", "pending")
+                .limit(100)
+                .onSnapshot((snapshot) => {
+                    state.relayMessages = snapshot.docs
+                        .map((doc) => normalizeRelayMessage(doc.id, doc.data()))
+                        .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+                    $("relayReviewList").setAttribute("aria-busy", "false");
+                    $("statRelayPending").textContent = compactNumber(state.relayMessages.length);
+                    renderRelayMessages();
+                }, (error) => {
+                    $("statRelayPending").textContent = "—";
+                    showRelayError("Chưa mở được hàng chờ", error.message || "Kiểm tra Firestore Rules.");
+                });
+            state.unsubscribers.push(unsubscribe);
+        }
+
         function stopSubscriptions() {
             state.unsubscribers.forEach((unsubscribe) => {
                 try { unsubscribe(); } catch (_) { /* already stopped */ }
             });
             state.unsubscribers = [];
             state.messages = [];
+            state.relayMessages = [];
         }
 
         function normalizeMessage(id, raw) {
@@ -307,6 +347,18 @@
                 mood,
                 text: typeof raw.text === "string" ? raw.text.slice(0, 200) : "",
                 context: typeof raw.messageShown === "string" ? raw.messageShown.slice(0, 120) : "",
+                createdAt,
+            };
+        }
+
+        function normalizeRelayMessage(id, raw) {
+            let createdAt = null;
+            try { createdAt = raw.createdAt && typeof raw.createdAt.toDate === "function" ? raw.createdAt.toDate() : null; } catch (_) { createdAt = null; }
+            return {
+                id,
+                text: typeof raw.text === "string" ? raw.text.slice(0, 140) : "",
+                category: typeof raw.category === "string" ? raw.category : "unknown",
+                moment: typeof raw.moment === "string" ? raw.moment : "daytime",
                 createdAt,
             };
         }
@@ -338,6 +390,104 @@
             }
 
             filtered.forEach((message, index) => list.appendChild(createMessageCard(message, index)));
+        }
+
+        function renderRelayMessages() {
+            const list = $("relayReviewList");
+            list.replaceChildren();
+            if (!state.relayMessages.length) {
+                const empty = document.createElement("div");
+                empty.className = "empty-state";
+                const icon = document.createElement("span");
+                icon.className = "state-icon";
+                icon.textContent = "🛵";
+                const title = document.createElement("p");
+                title.className = "state-title";
+                title.textContent = "Không còn lời nào chờ duyệt";
+                const copy = document.createElement("p");
+                copy.className = "state-copy";
+                copy.textContent = "Khi hành khách để lại lời nối chuyến, nó sẽ xuất hiện tại đây trước khi được công khai.";
+                empty.append(icon, title, copy);
+                list.appendChild(empty);
+                return;
+            }
+            state.relayMessages.forEach((message, index) => list.appendChild(createRelayReviewCard(message, index)));
+        }
+
+        function createRelayReviewCard(message, index) {
+            const momentLabels = { early: "chuyến sớm", daytime: "giữa ngày", commute: "tan tầm", late: "chuyến khuya" };
+            const card = document.createElement("article");
+            card.className = "msg-card relay-review-card";
+            card.style.setProperty("--mood-color", "#50bce8");
+            card.style.animationDelay = `${Math.min(index * 35, 280)}ms`;
+
+            const header = document.createElement("div");
+            header.className = "msg-header";
+            const pill = document.createElement("div");
+            pill.className = "msg-mood";
+            const icon = document.createElement("span");
+            icon.textContent = "🛵";
+            const label = document.createElement("span");
+            label.textContent = momentLabels[message.moment] || "nối chuyến";
+            pill.append(icon, label);
+            const time = document.createElement("time");
+            time.className = "msg-time";
+            time.textContent = formatTime(message.createdAt);
+            if (message.createdAt) time.dateTime = message.createdAt.toISOString();
+            header.append(pill, time);
+
+            const text = document.createElement("p");
+            text.className = "msg-text";
+            text.textContent = message.text || "Lời nhắn trống.";
+
+            const actions = document.createElement("div");
+            actions.className = "relay-review-actions";
+            const approve = document.createElement("button");
+            approve.type = "button";
+            approve.className = "approve-relay";
+            approve.textContent = "✓ duyệt để nối chuyến";
+            const reject = document.createElement("button");
+            reject.type = "button";
+            reject.className = "reject-relay";
+            reject.textContent = "ẩn lời này";
+            approve.addEventListener("click", () => reviewRelayMessage(message.id, "approved", [approve, reject]));
+            reject.addEventListener("click", () => reviewRelayMessage(message.id, "rejected", [approve, reject]));
+            actions.append(approve, reject);
+            card.append(header, text, actions);
+            return card;
+        }
+
+        async function reviewRelayMessage(id, status, buttons) {
+            buttons.forEach((button) => { button.disabled = true; });
+            try {
+                await state.db.collection("relay_messages").doc(id).update({
+                    status,
+                    reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                });
+                showToast(status === "approved" ? "Đã nối lời này sang chuyến sau ✦" : "Đã ẩn lời nhắn");
+            } catch (error) {
+                buttons.forEach((button) => { button.disabled = false; });
+                showToast(error.code === "permission-denied" ? "Tài khoản chưa có quyền duyệt" : "Chưa duyệt được, thử lại nhé");
+            }
+        }
+
+        function showRelayError(titleText, detailText) {
+            const list = $("relayReviewList");
+            list.setAttribute("aria-busy", "false");
+            list.replaceChildren();
+            const box = document.createElement("div");
+            box.className = "error-state";
+            const icon = document.createElement("span");
+            icon.className = "state-icon";
+            icon.textContent = "🛠️";
+            const title = document.createElement("p");
+            title.className = "state-title";
+            title.textContent = titleText;
+            const copy = document.createElement("p");
+            copy.className = "state-copy";
+            copy.textContent = detailText;
+            box.append(icon, title, copy);
+            list.appendChild(box);
         }
 
         function createMessageCard(message, index) {
@@ -403,7 +553,10 @@
             if (!state.db) return showToast("Hộp thư chưa kết nối");
             $("syncBtn").disabled = true;
             try {
-                await state.db.collection("thankyou_messages").limit(1).get();
+                await Promise.all([
+                    state.db.collection("thankyou_messages").limit(1).get(),
+                    state.db.collection("relay_messages").where("status", "==", "pending").limit(1).get(),
+                ]);
                 showToast("Hộp thư đã được đồng bộ ✦");
             } catch (_) {
                 showToast("Chưa thể đồng bộ, thử lại sau nhé");
