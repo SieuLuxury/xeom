@@ -6,7 +6,7 @@ Một trải nghiệm web dành cho hành khách: cào thẻ để nhận lời 
 
 - Giao diện Gen Z soft-maximalist với sticker, aurora background và motion tôn trọng `prefers-reduced-motion`.
 - Scratch card hỗ trợ touch, chuột và keyboard.
-- 92 lời nhắn mang ngữ cảnh chuyến xe, tự đổi sắc thái theo chuyến sớm, giữa ngày, tan tầm và đêm khuya.
+- 92 lời nhắn nguyên bản, đa dạng giữa động viên, nhắc nhẹ, lời chúc và suy ngẫm; tự đổi sắc thái theo buổi sớm, giữa ngày, cuối chiều và đêm muộn.
 - Ambient radio tạo bằng Web Audio, mood check-in, lưu lời nhắn, dark mode và bài thở 30 giây.
 - “Mang lời nhắn theo” tạo card PNG dọc 9:16, không chứa dữ liệu cá nhân.
 - “Lời nhắn nối chuyến” có hàng chờ kiểm duyệt trong Driver Inbox; form tự khóa nếu production Rules còn hở.
