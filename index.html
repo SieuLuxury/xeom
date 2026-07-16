@@ -36,8 +36,8 @@
         <a class="brand" href="#" id="brandHome" aria-label="Về trang chủ">
             <span class="brand-mark">🏍️</span>
             <span class="brand-copy">
-                <strong>trạm dịu dàng</strong>
-                <small>by tài xế của bạn</small>
+                <strong>Lê Đức Anh</strong>
+                <small> tài xế của bạn</small>
             </span>
         </a>
 
@@ -59,7 +59,7 @@
                     </label>
                 </div>
             </div>
-            <button class="icon-button compact" id="themeToggle" type="button" aria-label="Đổi màu giao diện" title="Đổi mood màu">☾</button>
+            <button class="icon-button compact" id="themeToggle" type="button" aria-label="Đổi màu giao diện" title="Đổi màu giao diện">☾</button>
             <button class="icon-button compact saved-button" id="savedToggle" type="button" aria-label="Mở lời nhắn đã lưu" aria-expanded="false" aria-controls="savedDrawer">
                 ♡<span class="saved-count" id="savedCount">0</span>
             </button>
@@ -74,24 +74,28 @@
                     <h1 id="homeTitle">Chạm nhẹ,<br>nhận một chút <em>dịu dàng.</em></h1>
                     <p class="hero-description">Không cần một ngày hoàn hảo. Chỉ cần một lời nhắn đúng lúc — được tài xế của bạn gói vào chiếc thẻ nhỏ này.</p>
 
-                    <div class="mood-checkin">
-                        <div class="mood-heading">
-                            <span id="moodLabel">Hôm nay bạn thấy sao?</span>
-                            <small id="moodResponse">chọn thật lòng nhé</small>
+                    <div class="mood-checkin" id="checkinPanel">
+                        <div id="checkinChoice">
+                            <div class="mood-heading">
+                                <span id="checkinLabel">Sáng nay bạn cảm thấy thế nào?</span>
+                            </div>
+                            <div class="mood-list" id="checkinList" role="group" aria-label="Chọn cảm xúc gần với bạn nhất">
+                                <button type="button" data-checkin="low" aria-label="Hơi mệt" aria-pressed="false"><b data-checkin-emoji aria-hidden="true">🥹</b><span>hơi mệt</span></button>
+                                <button type="button" data-checkin="steady" aria-label="Bình thường" aria-pressed="false"><b data-checkin-emoji aria-hidden="true">😌</b><span>bình thường</span></button>
+                                <button type="button" data-checkin="bright" aria-label="Đang vui" aria-pressed="false"><b data-checkin-emoji aria-hidden="true">😊</b><span>đang vui</span></button>
+                                <button type="button" data-checkin="overwhelmed" aria-label="Hơi căng thẳng" aria-pressed="false"><b data-checkin-emoji aria-hidden="true">😟</b><span>hơi căng thẳng</span></button>
+                            </div>
+                            <p class="checkin-prompt" id="checkinPrompt">Không cần đoán cả ngày sẽ ra sao.</p>
                         </div>
-                        <div class="mood-list" id="moodList" role="group" aria-label="Chọn tâm trạng hôm nay">
-                            <button type="button" data-mood="tired" data-emoji="🥹" aria-label="Hơi đuối" aria-pressed="false">🥹 <span>hơi đuối</span></button>
-                            <button type="button" data-mood="okay" data-emoji="😌" aria-label="Cũng ổn" aria-pressed="false">😌 <span>cũng ổn</span></button>
-                            <button type="button" data-mood="happy" data-emoji="😎" aria-label="Đang vui" aria-pressed="false">😎 <span>đang vui</span></button>
-                            <button type="button" data-mood="chaos" data-emoji="🤯" aria-label="Hơi hỗn loạn" aria-pressed="false">🤯 <span>hơi chaos</span></button>
+                        <div class="checkin-result" id="checkinResult" aria-live="polite" hidden>
+                            <div class="checkin-result-head">
+                                <span class="checkin-selected"><b id="checkinSelectedEmoji" aria-hidden="true">🥹</b><span id="checkinSelectedLabel">hơi mệt</span></span>
+                                <button id="checkinChange" type="button">chọn lại</button>
+                            </div>
+                            <span class="checkin-result-kicker">MỘT LỜI DÀNH CHO BẠN</span>
+                            <p class="checkin-response" id="checkinResponse"></p>
                         </div>
                     </div>
-
-                    <button class="surprise-button magnetic" id="surpriseBtn" type="button">
-                        <span>✨</span>
-                        <span><strong>Chọn giúp mình</strong><small>để vũ trụ gửi một lời nhắn</small></span>
-                        <i>↗</i>
-                    </button>
                 </div>
 
                 <div class="hero-visual reveal-in" aria-hidden="true">
@@ -111,7 +115,7 @@
                         </div>
                         <p>“Có những ngày, việc không bỏ rơi chính mình đã là một thành tựu.”</p>
                         <div class="postcard-bottom">
-                            <span>#motchutdudang</span>
+                            <span>#motchutdiudang</span>
                             <strong>LUCKY<br>TICKET</strong>
                         </div>
                     </div>
@@ -127,6 +131,14 @@
                         <h2 id="pickerTitle">Bạn cần nghe điều gì?</h2>
                     </div>
                     <p>Chọn một chiếc thẻ và cào để mở. Mỗi vibe chỉ mở một lần để lời nhắn luôn có chút đặc biệt.</p>
+                </div>
+                <div class="picker-surprise reveal-in">
+                    <span><strong>Chưa biết chọn thẻ nào?</strong><small>Để hệ thống chọn ngẫu nhiên một lời nhắn cho bạn.</small></span>
+                    <button class="surprise-button magnetic" id="surpriseBtn" type="button">
+                        <span>✨</span>
+                        <span><strong>Chọn giúp mình</strong><small>mở một thẻ bất ngờ</small></span>
+                        <i>↗</i>
+                    </button>
                 </div>
                 <div class="cat-grid" id="catGrid"></div>
             </section>
@@ -150,7 +162,7 @@
                 <div class="driver-avatar">🪖<span></span></div>
                 <div>
                     <span class="section-kicker">A NOTE FROM YOUR DRIVER</span>
-                    <blockquote>“Mình hơi hướng nội, nên không giỏi bắt chuyện. Thay vì lời nói, mình để vài dòng ở đây — mong chuyến đi của bạn nhẹ hơn một chút.”</blockquote>
+                    <blockquote>“Mình là Đức Anh - sinh viên công nghệ thông tin. Mình làm cái này chỉ với mục đích đem lại trải nhiệm thú vị trên chuyến xe nên bạn yên tâm về độ an toàn của trang web nha, nếu có gì trên chuyến xe khiến bạn cảm thấy không hài lòng thì mong bạn thông cảm giúp mình nha, cảm ơn bạn rất nhìuuu 😊.”</blockquote>
                 </div>
                 <div class="signature">tài xế<br>của bạn ♡</div>
             </section>
@@ -270,9 +282,12 @@
     <div class="confetti-container" id="confetti" aria-hidden="true"></div>
     <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastText"></span></div>
 
+    <script src="firebase-security.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="messages.js"></script>
+    <script src="checkin.js"></script>
     <script src="app.js"></script>
 </body>
 

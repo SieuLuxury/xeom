@@ -3,7 +3,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function isDriver() {
-      return request.auth != null && request.auth.token.driver == true;
+      return request.auth != null
+        && request.auth.token.driver == true
+        && request.auth.token.email_verified == true;
     }
 
     function validThankYou() {
@@ -64,7 +66,7 @@ service cloud.firestore {
     }
 
     function validRelayReview() {
-      return resource.data.status == 'pending'
+      return resource.data.status in ['pending', 'approved']
         && request.resource.data.keys().hasOnly([
           'text',
           'category',
@@ -75,20 +77,26 @@ service cloud.firestore {
         ])
         && request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['status', 'reviewedAt'])
-        && request.resource.data.status in ['approved', 'rejected']
+        && (
+          (resource.data.status == 'pending'
+            && request.resource.data.status in ['approved', 'rejected'])
+          || (resource.data.status == 'approved'
+            && request.resource.data.status == 'rejected')
+        )
         && request.resource.data.reviewedAt == request.time;
     }
 
     match /thankyou_messages/{messageId} {
       allow create: if validThankYou();
-      allow read, update, delete: if isDriver();
+      allow read: if isDriver();
+      allow update, delete: if false;
     }
 
     match /relay_messages/{messageId} {
       allow create: if validRelayCreate();
       allow read: if isDriver() || resource.data.status == 'approved';
       allow update: if isDriver() && validRelayReview();
-      allow delete: if isDriver();
+      allow delete: if false;
     }
 
     match /stats/global {

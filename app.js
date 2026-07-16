@@ -8,12 +8,14 @@ const FIREBASE_CONFIG = {
     messagingSenderId: "171700974856",
     appId: "1:171700974856:web:7016cf3aca9c8dd71968bd",
 };
+const FIREBASE_APP_CHECK_SITE_KEY = String(window.TRAM_FIREBASE_SECURITY?.appCheckSiteKey || "").trim();
+
 
 const STORAGE = {
     scratched: "tramdiudang_scratched_v2",
     legacyScratched: "xeom_scratched",
     saved: "tramdiudang_saved",
-    mood: "tramdiudang_mood",
+    checkin: "tramdiudang_checkin_v1",
     theme: "tramdiudang_theme",
     pending: "tramdiudang_pending_thanks",
     pendingRelay: "tramdiudang_pending_relay",
@@ -26,13 +28,6 @@ const CATEGORY_STYLES = {
     philosophy: { background: "#9ee4ff", from: "#50bce8", to: "#9685ff", sticker: "feel it all ✦" },
 };
 
-const MOOD_COPY = {
-    tired: "Đã ghi nhận: hôm nay cần được ôm nhẹ 🫶",
-    okay: "Một ngày bình yên cũng rất đáng quý 🌿",
-    happy: "Giữ chiếc mood này thật lâu nhé ✨",
-    chaos: "Không sao, mình gỡ từng nút một thôi 🫧",
-};
-
 const state = {
     currentCat: null,
     currentMsg: "",
@@ -41,7 +36,8 @@ const state = {
     scratchPoints: [],
     coveredCells: new Set(),
     grid: null,
-    mood: null,
+    checkin: null,
+    checkinPeriod: null,
     db: null,
     audio: null,
     breathingTimer: null,
@@ -60,7 +56,7 @@ function init() {
     initFirebase();
     migrateLegacyScratchData();
     initTheme();
-    initMood();
+    initCheckin();
     bindUI();
     renderCategories();
     updateProgress();
@@ -78,6 +74,12 @@ function initFirebase() {
     if (!window.firebase) return;
     try {
         if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+        if (FIREBASE_APP_CHECK_SITE_KEY && typeof firebase.appCheck === "function") {
+            firebase.appCheck().activate(
+                new firebase.appCheck.ReCaptchaEnterpriseProvider(FIREBASE_APP_CHECK_SITE_KEY),
+                true,
+            );
+        }
         state.db = firebase.firestore();
     } catch (error) {
         console.warn("Không thể khởi tạo Firebase:", error);
@@ -104,10 +106,11 @@ function bindUI() {
     $("clearSaved").addEventListener("click", clearSavedMessages);
     $("breathingOrb").addEventListener("click", toggleBreathing);
 
-    $("moodList").addEventListener("click", (event) => {
-        const button = event.target.closest("button[data-mood]");
-        if (button) selectMood(button.dataset.mood);
+    $("checkinList").addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-checkin]");
+        if (button) selectCheckin(button.dataset.checkin);
     });
+    $("checkinChange").addEventListener("click", reopenCheckin);
 
     $("quickReplies").addEventListener("click", (event) => {
         const button = event.target.closest("button");
@@ -132,6 +135,9 @@ function bindUI() {
         if (!event.target.closest(".sound-wrap")) hideSoundPanel();
     });
 
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) refreshCheckinPeriod();
+    });
     window.addEventListener("resize", debounce(() => {
         if (!$("screenScratch").hidden && !state.isRevealed && state.currentCat) initScratchCanvas(state.currentCat, true);
     }, 180));
@@ -139,6 +145,7 @@ function bindUI() {
         flushPendingThanks();
         flushPendingRelayMessages();
     });
+    window.setInterval(refreshCheckinPeriod, 60000);
 }
 
 function updateRideMomentUI() {
@@ -146,23 +153,77 @@ function updateRideMomentUI() {
     $("heroTime").textContent = `${getRideMomentLabel(now).toUpperCase()} • ${now.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}`;
 }
 
-// ---------- Home, mood and categories ----------
+// ---------- Home, check-in and categories ----------
 
-function initMood() {
-    const savedMood = readStorage(STORAGE.mood, null);
-    if (savedMood && MOOD_COPY[savedMood]) selectMood(savedMood, false);
+function initCheckin() {
+    renderCheckin();
+    const saved = readSessionStorage(STORAGE.checkin, null);
+    if (saved?.period === state.checkinPeriod && CHECKIN_STATE_KEYS.includes(saved.value)) {
+        selectCheckin(saved.value, saved.responseIndex);
+    }
 }
 
-function selectMood(mood, announce = true) {
-    state.mood = mood;
-    writeStorage(STORAGE.mood, mood);
-    $("moodList").querySelectorAll("button").forEach((button) => {
-        const selected = button.dataset.mood === mood;
+function renderCheckin(date = new Date()) {
+    const period = getCheckinPeriod(date);
+    const config = CHECKIN_PERIODS[period];
+    state.checkinPeriod = period;
+    $("checkinLabel").textContent = config.question;
+    $("checkinList").setAttribute("aria-label", config.question);
+    $("checkinPrompt").textContent = config.prompt;
+    $("checkinChoice").hidden = false;
+    $("checkinResult").hidden = true;
+    delete $("checkinPanel").dataset.checkin;
+
+    $("checkinList").querySelectorAll("button[data-checkin]").forEach((button) => {
+        const option = config.options[button.dataset.checkin];
+        button.querySelector("[data-checkin-emoji]").textContent = option.emoji;
+        button.querySelector("span").textContent = option.label;
+        button.setAttribute("aria-label", option.label);
+        button.classList.remove("is-selected");
+        button.setAttribute("aria-pressed", "false");
+    });
+}
+
+function selectCheckin(value, restoredResponseIndex = null) {
+    if (state.checkin) return;
+    const config = CHECKIN_PERIODS[state.checkinPeriod];
+    const option = config?.options[value];
+    if (!option) return;
+
+    const responseIndex = Number.isInteger(restoredResponseIndex)
+        && restoredResponseIndex >= 0
+        && restoredResponseIndex < option.responses.length
+        ? restoredResponseIndex
+        : Math.floor(Math.random() * option.responses.length);
+
+    state.checkin = value;
+    $("checkinList").querySelectorAll("button[data-checkin]").forEach((button) => {
+        const selected = button.dataset.checkin === value;
         button.classList.toggle("is-selected", selected);
         button.setAttribute("aria-pressed", String(selected));
     });
-    $("moodResponse").textContent = MOOD_COPY[mood];
-    if (announce) showToast(MOOD_COPY[mood]);
+    $("checkinSelectedEmoji").textContent = option.emoji;
+    $("checkinSelectedLabel").textContent = option.label;
+    $("checkinResponse").textContent = option.responses[responseIndex];
+    $("checkinPanel").dataset.checkin = value;
+    $("checkinChoice").hidden = true;
+    $("checkinResult").hidden = false;
+    writeSessionStorage(STORAGE.checkin, { value, period: state.checkinPeriod, responseIndex });
+}
+
+function reopenCheckin() {
+    state.checkin = null;
+    removeSessionStorage(STORAGE.checkin);
+    renderCheckin();
+    $("checkinList").querySelector("button")?.focus?.();
+}
+
+function refreshCheckinPeriod(date = new Date()) {
+    const nextPeriod = getCheckinPeriod(date);
+    if (nextPeriod === state.checkinPeriod) return;
+    state.checkin = null;
+    removeSessionStorage(STORAGE.checkin);
+    renderCheckin(date);
 }
 
 function renderCategories() {
@@ -188,16 +249,8 @@ function renderCategories() {
 }
 
 function openSurprise() {
-    const moodMap = {
-        tired: ["encouragement", "reminders"],
-        okay: ["philosophy", "wishes"],
-        happy: ["wishes", "philosophy"],
-        chaos: ["reminders", "encouragement"],
-    };
-    const preferred = moodMap[state.mood] || CATEGORIES.map((cat) => cat.id);
-    const unopened = CATEGORIES.filter((cat) => preferred.includes(cat.id) && !isCatScratched(cat.id));
-    const fallback = CATEGORIES.filter((cat) => !isCatScratched(cat.id));
-    const pool = unopened.length ? unopened : (fallback.length ? fallback : CATEGORIES);
+    const unopened = CATEGORIES.filter((cat) => !isCatScratched(cat.id));
+    const pool = unopened.length ? unopened : CATEGORIES;
     openCategory(pool[Math.floor(Math.random() * pool.length)]);
 }
 
@@ -214,9 +267,7 @@ function openCategory(cat) {
     $("scratchText").textContent = state.currentMsg;
     $("scratchSticker").textContent = CATEGORY_STYLES[cat.id]?.sticker || "take it easy ✦";
     const moment = getRideMomentLabel();
-    $("scratchLead").textContent = state.mood
-        ? `Một lời cho ${moment}, hợp với mood ${getMoodEmoji(state.mood)} của bạn. Cào thật chậm để mở nhé.`
-        : `Một lời được chọn cho ${moment} này. Cứ từ từ thôi, điều tử tế không cần vội.`;
+    $("scratchLead").textContent = `Một lời được chọn cho ${moment} này. Cứ từ từ thôi, điều tử tế không cần vội.`;
 
     resetScratchUI();
     $("screenHome").hidden = true;
@@ -1126,8 +1177,6 @@ async function sendThankYou() {
         category: state.currentCat?.id || "unknown",
         categoryEmoji: state.currentCat?.emoji || "💛",
         messageShown: state.currentMsg,
-        mood: state.mood || "unknown",
-        moodEmoji: getMoodEmoji(state.mood),
     };
 
     const button = $("btnSend");
@@ -1156,8 +1205,9 @@ async function writeThankYou(payload) {
         category: String(payload.category || "unknown"),
         categoryEmoji: String(payload.categoryEmoji || "💛").slice(0, 8),
         messageShown: String(payload.messageShown || "").slice(0, 500),
-        mood: String(payload.mood || "unknown"),
-        moodEmoji: String(payload.moodEmoji || "😊").slice(0, 8),
+        // Legacy placeholders required by deployed Rules; the passenger check-in is never sent.
+        mood: "unknown",
+        moodEmoji: "✨",
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
     await state.db.collection("stats").doc("global").set({
@@ -1351,10 +1401,6 @@ function showToast(message) {
     toastTimer = window.setTimeout(() => $("toast").classList.remove("show"), 2600);
 }
 
-function getMoodEmoji(mood) {
-    return { tired: "🥹", okay: "😌", happy: "😎", chaos: "🤯" }[mood] || "😊";
-}
-
 function containsSensitiveInfo(text) {
     const email = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i;
     const phone = /(?:\+?84|0)(?:[\s.-]*\d){8,10}\b/;
@@ -1386,6 +1432,22 @@ function readStorage(key, fallback) {
 function writeStorage(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); }
     catch (_) { /* Private mode or full storage: keep the in-session experience working. */ }
+}
+
+function readSessionStorage(key, fallback) {
+    try {
+        const raw = sessionStorage.getItem(key);
+        return raw === null ? fallback : JSON.parse(raw);
+    } catch (_) { return fallback; }
+}
+
+function writeSessionStorage(key, value) {
+    try { sessionStorage.setItem(key, JSON.stringify(value)); }
+    catch (_) { /* The check-in still works for the current page view. */ }
+}
+
+function removeSessionStorage(key) {
+    try { sessionStorage.removeItem(key); } catch (_) { /* Optional storage. */ }
 }
 
 function formatCompactNumber(value) {

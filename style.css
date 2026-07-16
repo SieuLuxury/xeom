@@ -284,6 +284,8 @@ body[data-theme="night"] .particle { background: rgba(255,255,255,.06); border-c
 .hero-description { max-width: 590px; margin: 0; color: var(--ink-soft); font-size: 17px; line-height: 1.65; }
 
 .mood-checkin {
+    --checkin-accent: #7453ff;
+    --checkin-soft: #eee9ff;
     max-width: 610px;
     margin-top: 30px;
     padding: 18px;
@@ -293,9 +295,12 @@ body[data-theme="night"] .particle { background: rgba(255,255,255,.06); border-c
     backdrop-filter: blur(14px);
 }
 body[data-theme="night"] .mood-checkin { background: rgba(255,255,255,.035); }
-.mood-heading { display: flex; justify-content: space-between; gap: 15px; margin-bottom: 13px; }
+.mood-checkin[data-checkin="low"] { --checkin-accent: #8b68e8; --checkin-soft: #eee8ff; }
+.mood-checkin[data-checkin="steady"] { --checkin-accent: #319f7b; --checkin-soft: #dcf5eb; }
+.mood-checkin[data-checkin="bright"] { --checkin-accent: #e88a28; --checkin-soft: #fff0c9; }
+.mood-checkin[data-checkin="overwhelmed"] { --checkin-accent: #db637e; --checkin-soft: #ffe2ea; }
+.mood-heading { margin-bottom: 13px; }
 .mood-heading span { font-weight: 700; font-size: 13px; }
-.mood-heading small { color: var(--ink-faint); font-size: 11px; }
 .mood-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .mood-list button {
     min-height: 46px;
@@ -307,10 +312,22 @@ body[data-theme="night"] .mood-checkin { background: rgba(255,255,255,.035); }
     transition: transform .25s var(--ease-out), border-color .25s, background .25s;
 }
 .mood-list button span { display: block; margin-top: 2px; color: var(--ink-soft); font-size: 10px; }
+.mood-list button b { font-size: 18px; font-weight: inherit; }
 .mood-list button:hover { transform: translateY(-3px) rotate(-1deg); border-color: var(--violet); }
 .mood-list button.is-selected { background: var(--violet); color: white; border-color: var(--violet); transform: translateY(-3px); }
 .mood-list button.is-selected span { color: rgba(255,255,255,.75); }
 
+.checkin-prompt { margin: 11px 2px 0; color: var(--ink-faint); font-size: 11px; line-height: 1.5; }
+.checkin-result { position: relative; overflow: hidden; padding: 17px 18px 19px; border: 2px solid var(--checkin-accent); border-radius: 18px; background: linear-gradient(135deg, var(--checkin-soft), rgba(255,255,255,.72)); box-shadow: 4px 5px 0 color-mix(in srgb, var(--checkin-accent) 28%, transparent); text-align: left; }
+body[data-theme="night"] .checkin-result { background: color-mix(in srgb, var(--checkin-accent) 18%, #17131f); }
+.checkin-result-head { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.checkin-selected { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 750; }
+.checkin-selected b { font-size: 22px; font-weight: inherit; }
+.checkin-result-head button { padding: 5px 9px; border: 1px solid color-mix(in srgb, var(--checkin-accent) 45%, transparent); border-radius: 99px; background: rgba(255,255,255,.55); color: var(--ink-soft); font-size: 9px; font-weight: 750; cursor: pointer; }
+body[data-theme="night"] .checkin-result-head button { background: rgba(255,255,255,.07); }
+.checkin-result-kicker { position: relative; z-index: 1; display: block; margin-top: 16px; color: var(--checkin-accent); font-size: 9px; font-weight: 850; letter-spacing: .1em; }
+.checkin-response { position: relative; z-index: 1; max-width: 530px; margin: 6px 0 0; color: var(--ink); font-size: 17px; font-weight: 650; line-height: 1.5; letter-spacing: -.015em; }
+.checkin-result::after { content: "♡"; position: absolute; right: -12px; bottom: -40px; color: var(--checkin-accent); opacity: .09; font-family: var(--font-display); font-size: 130px; transform: rotate(-12deg); }
 .surprise-button {
     width: min(100%, 410px);
     margin-top: 18px;
@@ -381,6 +398,12 @@ body[data-theme="night"] .mood-checkin { background: rgba(255,255,255,.035); }
 @keyframes stickerFloat { 50% { translate: 0 -9px; rotate: 3deg; } }
 
 .message-picker { padding-top: 90px; }
+.picker-surprise { margin: -5px 0 30px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border: 1px dashed var(--line); border-radius: 20px; background: rgba(255,255,255,.22); }
+body[data-theme="night"] .picker-surprise { background: rgba(255,255,255,.025); }
+.picker-surprise > span { display: flex; flex-direction: column; gap: 3px; color: var(--ink-soft); font-size: 11px; }
+.picker-surprise > span strong { color: var(--ink); font-size: 12px; }
+.picker-surprise .surprise-button { width: min(100%, 390px); margin: 0; flex: 0 1 390px; }
+
 .section-heading { display: grid; grid-template-columns: 1fr minmax(250px, 370px); align-items: end; gap: 40px; margin-bottom: 28px; }
 .section-kicker { color: var(--violet); }
 .section-heading h2, .progress-copy h2, .driver-note blockquote, .drawer-head h2 {
@@ -698,12 +721,12 @@ body[data-theme="night"] .ty-success { color: #91e3b4; }
     .hero-copy h1 { margin: 21px 0 18px; font-size: clamp(3.7rem, 17.5vw, 5.2rem); line-height: .87; }
     .hero-description { font-size: 15px; }
     .mood-checkin { margin-top: 23px; padding: 13px; }
-    .mood-heading { align-items: center; }
-    .mood-heading small { max-width: 120px; text-align: right; }
     .mood-list { gap: 5px; }
-    .mood-list button { min-width: 0; padding: 7px 3px; font-size: 18px; }
-    .mood-list button span { font-size: 8px; white-space: nowrap; }
+    .mood-list button { min-width: 0; padding: 7px 2px; font-size: 18px; }
+    .mood-list button span { font-size: 8px; line-height: 1.15; }
     .surprise-button { width: 100%; }
+    .checkin-result { padding: 14px 14px 16px; }
+    .checkin-response { font-size: 14px; line-height: 1.5; }
     .hero-visual { min-height: 440px; margin-top: 5px; }
     .postcard { width: calc(100% - 24px); min-height: 400px; padding: 24px; border-radius: 27px; box-shadow: 10px 12px 0 rgba(116,83,255,.22), var(--shadow-lg); }
     .sticker-slow { width: 80px; height: 80px; left: -6px; top: 10px; font-size: 14px; }
@@ -713,6 +736,8 @@ body[data-theme="night"] .ty-success { color: #91e3b4; }
     .section-heading { grid-template-columns: 1fr; align-items: start; gap: 15px; }
     .section-heading h2 { font-size: 2.7rem; }
     .cat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .picker-surprise { margin-bottom: 22px; padding: 13px; flex-direction: column; align-items: stretch; text-align: left; }
+    .picker-surprise .surprise-button { flex-basis: auto; }
     .cat-card { min-height: 218px; padding: 16px; border-radius: 22px; box-shadow: 4px 5px 0 var(--ink); }
     .cat-card:hover { transform: translateY(-5px); box-shadow: 6px 8px 0 var(--ink); }
     .cat-index { font-size: 8px; }
